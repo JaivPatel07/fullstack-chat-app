@@ -30,8 +30,7 @@ const sanitizeSearchQuery = (query, maxLength = 100) => {
 /**
  * SECURITY GATEWAY: Validates incoming Base64 image payload signatures and data footprints.
  * Rejects extension forgery by analyzing actual MIME content mapping declarations.
- * 
- * @param {string} base64Str - The raw Base64 data URL string from the client.
+ * * @param {string} base64Str - The raw Base64 data URL string from the client.
  * @param {number} maxSizeBytes - Maximum permissible binary footprint (default 5MB).
  * @returns {Object} Validation status descriptor containing { isValid: boolean, error?: string }
  */
@@ -94,6 +93,7 @@ export async function getUsers(req, res) {
                 },
             },
             { $unwind: "$partner" },
+            // OPTIMIZATION: Only project the necessary user fields to save DB memory & bandwidth
             { 
                 $project: {
                     "partner.password": 0,
@@ -146,8 +146,11 @@ export async function getUsers(req, res) {
 export async function searchUsers(req, res) {
     try {
         const safeQuery = sanitizeSearchQuery(req.query.q);
+        
+        // Return empty array if query is missing, empty, invalid type, or too long
         if (!safeQuery) return res.status(200).json([]);
 
+        // OPTIMIZATION: explicitly pull only necessary public fields
         const users = await User.find({
             _id: { $ne: req.userId },
             name: { $regex: safeQuery, $options: "i" },
@@ -215,6 +218,7 @@ export async function getMessages(req, res) {
 export async function sendMessage(req, res) {
     try {
         const { id: receiverId } = req.params;
+        // GSSoC Issue #57 Fix
         if (!receiverId) {
             return res.status(400).json({ message: "Receiver ID is required" });
         }
@@ -372,6 +376,7 @@ export async function reactToMessage(req, res) {
         if (existingReactionIndex > -1) {
             message.reactions.splice(existingReactionIndex, 1);
         } else {
+            // Add new reaction
             message.reactions.push({ emoji, userId });
         }
 
@@ -405,6 +410,8 @@ export async function searchTextMessages(req, res) {
         }
 
         const safeQuery = sanitizeSearchQuery(req.query.q);
+        
+        // Return empty array if query is missing, empty, invalid type, or too long
         if (!safeQuery) return res.status(200).json([]);
 
         const senderId = req.userId;
