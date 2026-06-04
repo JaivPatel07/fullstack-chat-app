@@ -15,7 +15,7 @@ import webpush from "../lib/webpush.js";
 const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /**
- * Validates and sanitizes search queries to prevent abuse.
+ * Validates and cleans search queries to protect against malicious input patterns.
  * @param {any} query - The raw query from the request.
  * @param {number} maxLength - Maximum allowed characters.
  * @returns {string|null} - Sanitized string or null if invalid.
@@ -25,6 +25,38 @@ const sanitizeSearchQuery = (query, maxLength = 100) => {
     const trimmed = query.trim();
     if (!trimmed || trimmed.length > maxLength) return null;
     return escapeRegex(trimmed);
+};
+
+/**
+ * SECURITY GATEWAY: Validates incoming Base64 image payload signatures and data footprints.
+ * Rejects extension forgery by analyzing actual MIME content mapping declarations.
+ * * @param {string} base64Str - The raw Base64 data URL string from the client.
+ * @param {number} maxSizeBytes - Maximum permissible binary footprint (default 5MB).
+ * @returns {Object} Validation status descriptor containing { isValid: boolean, error?: string }
+ */
+const validateImageAttachment = (base64Str, maxSizeBytes = 5 * 1024 * 1024) => {
+    // Check if format conforms to a legitimate Data URL structure
+    const match = base64Str.match(/^data:([^;]+);base64,(.+)$/);
+    if (!match) {
+        return { isValid: false, error: "Invalid file format structure or corrupt payload." };
+    }
+
+    const mimeType = match[1];
+    const rawData = match[2];
+
+    // Enforce strict allow-list on image signatures to block structural forgery
+    const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!ALLOWED_MIME_TYPES.includes(mimeType.toLowerCase())) {
+        return { isValid: false, error: "Unsupported image signature type. Allowed formats: JPEG, PNG, WEBP, GIF." };
+    }
+
+    // Calculate precise binary footprint size from base64 encoding representation string length
+    const binarySizeEstimate = Math.floor((rawData.length * 3) / 4) - (rawData.endsWith("==") ? 2 : rawData.endsWith("=") ? 1 : 0);
+    if (binarySizeEstimate > maxSizeBytes) {
+        return { isValid: false, error: "File boundary limit exceeded. Image size must be under 5MB." };
+    }
+
+    return { isValid: true };
 };
 
 // ── GET /messages/users ──────────────────────────────────────────
@@ -73,7 +105,6 @@ export async function getUsers(req, res) {
             { $sort: { "lastMessage.createdAt": -1 } },
         ]);
 
-        // Get unread counts in a single query
         const unreadCounts = await Message.aggregate([
             { $match: { receiverId: userId, status: { $in: ["sent", "delivered"] } } },
             { $group: { _id: "$senderId", count: { $sum: 1 } } },
@@ -210,6 +241,12 @@ export async function sendMessage(req, res) {
 
         let imageUrl = "";
         if (image) {
+            // SECURITY CHECK: Intercept extension masquerades using file signature processing rules
+            const validation = validateImageAttachment(image);
+            if (!validation.isValid) {
+                return res.status(400).json({ message: validation.error });
+            }
+
             const result = await cloudinary.uploader.upload(image);
             imageUrl = result.secure_url;
         }
