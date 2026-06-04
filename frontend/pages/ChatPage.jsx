@@ -1,3 +1,4 @@
+import React, { Component } from "react";
 import React, { Component, useState, useRef, useEffect } from "react";
 import useChatStore from "../src/store/useChatStore";
 import Sidebar from "../components/chat/Sidebar";
@@ -16,6 +17,7 @@ class ChatLayoutErrorBoundary extends Component {
     }
 
     static getDerivedStateFromError(error) {
+        // Update state so the next render will show the safe fallback UI.
         return { hasError: true };
     }
 
@@ -25,6 +27,7 @@ class ChatLayoutErrorBoundary extends Component {
 
     render() {
         if (this.state.hasError) {
+            // Elegant DaisyUI Fallback UI when rendering errors crash the active feed
             return (
                 <div className="h-full w-full flex flex-col items-center justify-center bg-base-300 p-6 text-center">
                     <div className="max-w-md bg-base-100 p-8 rounded-2xl shadow-xl border border-base-content/10">
@@ -50,7 +53,7 @@ class ChatLayoutErrorBoundary extends Component {
 /**
  * ChatPage Component Layout Shell.
  * Orchestrates the responsive dual-panel view between the sidebar and active windows.
- * PERFORMANCE & UX HARDENED: Tracks scroll offsets to handle auto-scroll locking thresholds.
+ * Wrapped securely in a layout boundary to handle malformed message streams gracefully.
  *
  * @returns {React.JSX.Element}
  */
@@ -141,37 +144,16 @@ export default function ChatPage() {
     return (
         <ChatLayoutErrorBoundary>
             <div className="h-full flex overflow-hidden bg-base-200 relative">
-                
-                {/* FLOATING UX BADGE LAYER */}
-                {showScrollBadge && (
-                    <div className="absolute bottom-28 left-1/2 md:left-[60%] -translate-x-1/2 z-50 animate-in fade-in slide-in-from-bottom-4 duration-200">
-                        <button 
-                            onClick={snapToBottom}
-                            className="btn btn-primary rounded-full shadow-2xl flex items-center gap-2 border border-primary-focus text-primary-content"
-                        >
-                            <ArrowDown className="w-4 h-4 animate-bounce" />
-                            New Messages Below
-                        </button>
-                    </div>
-                )}
-
-                {/* VISUAL WRAPPER MODULE */}
-                <div 
-                    ref={containerRef}
-                    onScroll={handleScrollTracking}
-                    className="w-full h-full flex overflow-y-auto overflow-x-hidden relative scrollbar-thin"
-                >
-                    <Sidebar
-                        selectedUser={selectedUser}
-                        onSelectUser={setSelectedUser}
-                        isMobileHidden={chatSelected}
-                    />
-                    <ChatWindow
-                        selectedUser={selectedUser}
-                        onBack={() => setSelectedUser(null)}
-                        isMobileHidden={!chatSelected}
-                    />
-                </div>
+                <Sidebar
+                    selectedUser={selectedUser}
+                    onSelectUser={setSelectedUser}
+                    isMobileHidden={chatSelected}
+                />
+                <ChatWindow
+                    selectedUser={selectedUser}
+                    onBack={() => setSelectedUser(null)}
+                    isMobileHidden={!chatSelected}
+                />
             </div>
         </ChatLayoutErrorBoundary>
     );
