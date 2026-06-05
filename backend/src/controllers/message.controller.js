@@ -181,6 +181,10 @@ export async function getMessages(req, res) {
         const limit = Math.min(parseInt(req.query.limit) || 30, 100);
         const beforeId = req.query.before;
 
+        if (beforeId && !mongoose.Types.ObjectId.isValid(beforeId)) {
+            return res.status(400).json({ message: "Invalid cursor ID format" });
+        }
+
         const filter = {
             $or: [
                 { senderId, receiverId },
