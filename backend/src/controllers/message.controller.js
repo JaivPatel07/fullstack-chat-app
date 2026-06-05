@@ -309,6 +309,9 @@ export async function sendMessage(req, res) {
 export async function deleteMessage(req, res) {
     try {
         const { id } = req.params;
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ message: "Invalid message ID format" });
+        }
         const senderId = req.userId;
 
         const message = await Message.findById(id);
@@ -366,6 +369,9 @@ export async function markMessagesAsSeen(req, res) {
 export async function reactToMessage(req, res) {
     try {
         const { id } = req.params;
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ message: "Invalid message ID format" });
+        }
         const { emoji } = req.body;
         const userId = req.userId;
 
