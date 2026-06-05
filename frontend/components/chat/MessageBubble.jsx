@@ -89,6 +89,11 @@ export default function MessageBubble({ msg, isMine, showTime, selectedUser, isO
                             ))}
                         </div>
                     )}
+                    {msg.expiresAt && (
+    <div className="text-[10px] text-warning font-medium mb-1">
+        ⏳ Expires Soon
+    </div>
+)}
 
                     <div className={`flex items-center justify-end gap-1 mt-1 text-[10px] ${isMine ? "text-primary-content/70" : "text-base-content/50"}`}>
                         <span>{formatTime(msg.createdAt)}</span>
