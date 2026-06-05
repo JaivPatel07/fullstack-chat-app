@@ -51,12 +51,20 @@ export default function Sidebar({ selectedUser, onSelectUser, isMobileHidden }) 
         `}>
             <div className="p-4 border-b border-base-200">
                 <div className="flex items-center justify-between mb-3">
-                    <h2 className="font-bold text-lg">
-                        Messages
-                        {onlineUsers.length > 0 && (
-                            <span className="ml-2 badge badge-success badge-sm">{onlineUsers.length} online</span>
-                        )}
-                    </h2>
+                    <div>
+    <h2 className="font-bold text-lg">
+        Messages
+        {onlineUsers.length > 0 && (
+            <span className="ml-2 badge badge-success badge-sm">
+                {onlineUsers.length} online
+            </span>
+        )}
+    </h2>
+
+    <p className="text-[10px] text-base-content/40">
+        Backup status: Not configured
+    </p>
+</div>
                     <button
                         onClick={() => setShowNewChat(true)}
                         className="btn btn-ghost btn-sm btn-circle"
