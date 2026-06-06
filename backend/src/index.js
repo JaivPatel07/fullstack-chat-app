@@ -29,6 +29,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Core Security & Parser Middleware Layer
+// Security Middleware Layer
 app.use(cors({
     origin: process.env.NODE_ENV === "production"
         ? true
@@ -36,6 +37,8 @@ app.use(cors({
     credentials: true,
 }));
 app.use(helmet({ contentSecurityPolicy: false }));
+// GSSoC Issue #35 Fix
+app.disable("x-powered-by");
 app.use(express.json({ limit: "5mb" }));
 app.use(cookieParser()); // Must precede CSRF to parse incoming cookies
 
@@ -107,6 +110,15 @@ app.use((err, req, res, next) => {
     console.error("Centralized Route Error Intercepted:", err.stack || err);
     const statusCode = err.status || err.statusCode || 500;
     
+ * HARDENING FIX: Sanitizes stack traces in production to prevent information disclosure vulnerabilities.
+ */
+app.use((err, req, res, next) => {
+    // Log the full diagnostic stack internally on the server console for debugging
+    console.error("Centralized Route Error Intercepted:", err.stack || err);
+
+    const statusCode = err.status || err.statusCode || 500;
+    
+    // Evaluate execution scope to mask internal error details from HTTP clients in production
     if (process.env.NODE_ENV === "production") {
         return res.status(statusCode).json({
             message: "An internal server error occurred.",
@@ -114,6 +126,7 @@ app.use((err, req, res, next) => {
         });
     }
 
+    // Deliver complete stack information only during local development testing cycles
     return res.status(statusCode).json({
         message: err.message || "Internal Server Error",
         error: err.toString(),
@@ -131,7 +144,8 @@ if (process.env.NODE_ENV === "production") {
 
 // System Boot
 server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    // GSSoC Issue #45 Fix
+    console.log(`[INFO] Server successfully running on port ${PORT}`);
     connectDB();
 });
 
@@ -141,6 +155,7 @@ process.on("unhandledRejection", (err) => {
 });
 
 process.on("uncaughtException", (err) => {
+    // Conditionally isolate stack traces from log dumps based on active environments
     if (process.env.NODE_ENV === "production") {
         console.error("Fatal Uncaught Exception Triggered: Process Terminating. Context:", err?.message || "Internal Error");
     } else {
