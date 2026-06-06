@@ -93,7 +93,7 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="p-8">
-                    <div className="flex justify-between items-center mb-6">
+                    <div className="flex justify-between items-center mb-6 mt-8">
                         <h3 className="text-2xl font-bold">Profile Information</h3>
                         <div className="flex gap-2">
                             {!isEditing ? (
