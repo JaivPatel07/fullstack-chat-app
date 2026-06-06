@@ -10,6 +10,7 @@ const formatTime = (d) =>
 export default function MessageBubble({ msg, isMine, showTime, selectedUser, isOnline, authUser, onContextMenu, onTouchStart, onTouchEnd, onReact }) {
 
     const [showTranslation, setShowTranslation] = useState(false)
+    const [selectedImage, setSelectedImage] = useState(null)
 
     const getTranslatedText = (text) => {
     const translations = {
@@ -61,12 +62,13 @@ export default function MessageBubble({ msg, isMine, showTime, selectedUser, isO
                             </div>
                         )}
                     {msg.image && (
-                        <img
-                            src={msg.image} alt="attachment"
-                            className="max-w-full rounded-lg mb-1 cursor-pointer"
-                            onClick={() => window.open(msg.image, "_blank")}
-                        />
-                    )}
+    <img
+        src={msg.image}
+        alt="attachment"
+        className="max-w-full rounded-lg mb-1 cursor-pointer hover:opacity-90 transition"
+        onClick={() => setSelectedImage(msg.image)}
+    />
+)}
                     
 {msg.audio && (
     <>
