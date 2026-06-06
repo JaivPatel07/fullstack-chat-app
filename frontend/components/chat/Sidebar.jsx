@@ -5,6 +5,7 @@ import useAuthStore from "../../src/store/useAuthStore"
 import { getSocket } from "../../lib/socket"
 import Avatar from "./Avatar"
 import NewChatModal from "./NewChatModal"
+import { Search, PenSquare, MonitorSmartphone, Palette } from "lucide-react"
 
 const formatTime = (d) =>
     new Date(d).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
@@ -44,8 +45,11 @@ export default function Sidebar({ selectedUser, onSelectUser, isMobileHidden }) 
     }, [])
 
     const filtered = users.filter(u =>
-    (selectedFolder === "All" ||
-        u.folder === selectedFolder) &&
+    (
+        selectedFolder === "All" ||
+        (selectedFolder === "Unread" && u.unreadCount > 0) ||
+        u.folder === selectedFolder
+    ) &&
     u.name.toLowerCase().includes(search.toLowerCase())
 )
 
@@ -100,7 +104,7 @@ export default function Sidebar({ selectedUser, onSelectUser, isMobileHidden }) 
             </div>
 
             <div className="flex gap-2 px-3 py-2 border-b border-base-200 overflow-x-auto">
-    {["All", "Work", "Friends", "Archived"].map(folder => (
+    {["All", "Unread", "Work", "Friends", "Archived"].map(folder => (
         <button
             key={folder}
             onClick={() => setSelectedFolder(folder)}
