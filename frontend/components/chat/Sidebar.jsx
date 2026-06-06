@@ -15,6 +15,7 @@ export default function Sidebar({ selectedUser, onSelectUser, isMobileHidden }) 
     const { onlineUsers } = useAuthStore()
     const [search, setSearch] = useState("")
     const [showNewChat, setShowNewChat] = useState(false)
+    const [selectedFolder, setSelectedFolder] = useState("All")
 
     const previousOnlineRef = useRef(onlineUsers)
 
@@ -42,7 +43,11 @@ export default function Sidebar({ selectedUser, onSelectUser, isMobileHidden }) 
         return () => socket.off("getOnlineUsers")
     }, [])
 
-    const filtered = users.filter(u => u.name.toLowerCase().includes(search.toLowerCase()))
+    const filtered = users.filter(u =>
+    (selectedFolder === "All" ||
+        u.folder === selectedFolder) &&
+    u.name.toLowerCase().includes(search.toLowerCase())
+)
 
     return (
         <aside className={`
@@ -94,6 +99,22 @@ export default function Sidebar({ selectedUser, onSelectUser, isMobileHidden }) 
                 </label>
             </div>
 
+            <div className="flex gap-2 px-3 py-2 border-b border-base-200 overflow-x-auto">
+    {["All", "Work", "Friends", "Archived"].map(folder => (
+        <button
+            key={folder}
+            onClick={() => setSelectedFolder(folder)}
+            className={`btn btn-xs ${
+                selectedFolder === folder
+                    ? "btn-primary"
+                    : "btn-outline"
+            }`}
+        >
+            {folder}
+        </button>
+    ))}
+</div>
+
             <div className="flex-1 overflow-y-auto">
                 {isUsersLoading ? (
                     <div className="flex items-center justify-center h-32">
@@ -113,6 +134,10 @@ export default function Sidebar({ selectedUser, onSelectUser, isMobileHidden }) 
                     filtered.map(user => {
                         const isOnline = onlineUsers.includes(user._id)
                         const lm = user.lastMessage
+                        const folder =
+                        user.folder ||
+                        (user.name.charCodeAt(0) % 2 === 0 
+                        ? "Work": "Friends")
                         const preview = lm
                             ? (lm.message || (lm.audio ? "🎤 Voice" : lm.image ? "📷 Image" : ""))
                             : ""
