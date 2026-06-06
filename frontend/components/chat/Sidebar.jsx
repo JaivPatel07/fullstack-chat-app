@@ -158,9 +158,17 @@ export default function Sidebar({ selectedUser, onSelectUser, isMobileHidden }) 
                                 <div className="min-w-0 flex-1">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-1 min-w-0">
+    <div className="flex items-center gap-1">
     <p className="font-medium text-sm truncate">
         {user.name}
     </p>
+
+    {folder === "Archived" && (
+        <span className="badge badge-warning badge-xs">
+            Archived
+        </span>
+    )}
+</div>
 
     <Palette
         className="w-3 h-3 text-primary shrink-0"
@@ -173,34 +181,44 @@ export default function Sidebar({ selectedUser, onSelectUser, isMobileHidden }) 
                                             </span>
                                         )}
                                     </div>
+                                    
                                     <div className="flex items-center justify-between">
-                                        {typingUsers.includes(user._id) ? (
-                                            <div className="flex items-center gap-1">
-    <span className="w-2 h-2 rounded-full bg-success animate-pulse"></span>
-    <p className="text-xs text-success font-bold truncate">
-        typing...
-    </p>
+    {folder === "Archived" ? (
+        <p className="text-xs text-warning truncate">
+            Archived Conversation
+        </p>
+    ) : typingUsers.includes(user._id) ? (
+        <div className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-success animate-pulse"></span>
+            <p className="text-xs text-success font-bold truncate">
+                typing...
+            </p>
+        </div>
+    ) : preview ? (
+        <p className="text-xs text-base-content/50 truncate">
+            {preview}
+        </p>
+    ) : (
+        <div className="flex items-center gap-1">
+            <span
+                className={`w-2 h-2 rounded-full ${
+                    isOnline ? "bg-success" : "bg-base-300"
+                }`}
+            />
+            <p className={`text-xs ${
+                isOnline ? "text-success" : "text-base-content/40"
+            }`}>
+                {isOnline ? "Active now" : "Offline"}
+            </p>
+        </div>
+    )}
+
+    {user.unreadCount > 0 && (
+        <span className="badge badge-primary badge-xs ml-1 shrink-0">
+            {user.unreadCount > 99 ? "99+" : user.unreadCount}
+        </span>
+    )}
 </div>
-                                        ) : preview ? (
-                                            <p className="text-xs text-base-content/50 truncate">{preview}</p>
-                                        ) : (
-                                            <div className="flex items-center gap-1">
-    <span
-        className={`w-2 h-2 rounded-full ${
-            isOnline ? "bg-success" : "bg-base-300"
-        }`}
-    />
-    <p className={`text-xs ${isOnline ? "text-success" : "text-base-content/40"}`}>
-        {isOnline ? "Active now" : "Offline"}
-    </p>
-</div>
-                                        )}
-                                        {user.unreadCount > 0 && (
-                                            <span className="badge badge-primary badge-xs ml-1 shrink-0">
-                                                {user.unreadCount > 99 ? "99+" : user.unreadCount}
-                                            </span>
-                                        )}
-                                    </div>
                                 </div>
                             </button>
                         )
